@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-16"?>
+<root>
+	<config>
+		<tc_title>Keyboard Driver</tc_title>
+		<tc_mutex>OEMDRV_BY_K816_MUTEX</tc_mutex>
+		<tc_config>配置</tc_config>
+		<tc_exit>退出</tc_exit>
+		<tc_version>驱动版本:</tc_version>
+		<tc_web>www.redragonzone.com</tc_web>
+		<tc_update>检测到新版固件，请插入Redragon K617-RGB Keyboard进行升级，升级成功后请重新拔插键盘</tc_update>
+
+		<tc_ok>确定</tc_ok>
+		<tc_restore>恢复默认</tc_restore>
+		<tc_cancel>取消</tc_cancel>
+		<tc_apply>应用</tc_apply>
+		<tc_protitle>配置文件</tc_protitle>
+		<tc_proname>Profile</tc_proname>
+		<tc_str1></tc_str1>
+		<tc_str2></tc_str2>
+		<tc_str3></tc_str3>
+
+		<tc_page1>键盘</tc_page1>
+		<tc_page2>宏编辑器</tc_page2>
+		<tc_page3>多媒体</tc_page3>
+		<tc_page4>语种</tc_page4>
+		<tc_page5>宏数量已经达到最大值</tc_page5>
+		<tc_page6></tc_page6>
+
+		<tc_macro_stop>停止录制宏</tc_macro_stop>
+		<tc_macro_start>开始录制宏</tc_macro_start>
+		<tc_macro_list>宏列表</tc_macro_list>
+		<tc_macro_key_list>按键列表</tc_macro_key_list>
+		<tc_macro_auto>自动插入延时</tc_macro_auto>
+		<tc_macro_loop>插入事件</tc_macro_loop>
+		<tc_macro_loop1>指定循环次数</tc_macro_loop1>
+		<tc_macro_loop2>循环直到按键松开</tc_macro_loop2>
+		<tc_macro_loop3>循环直到任意按键按下</tc_macro_loop3>
+		<tc_macro_msg1>请先选中一个宏</tc_macro_msg1>
+		<tc_macro_msg2>请先选择一个宏目录</tc_macro_msg2>
+		<tc_macro_msg3>导入宏</tc_macro_msg3>
+		<tc_macro_msg4>导出该宏</tc_macro_msg4>
+		<tc_macro_msg5>新建宏</tc_macro_msg5>
+		<tc_macro_msg6>新建宏目录</tc_macro_msg6>
+		<tc_macro_msg7>修改</tc_macro_msg7>
+		<tc_macro_msg8>该目录下已经有一个同名宏</tc_macro_msg8>
+		<tc_macro_msg9>右键点击宏列表条目进行编辑</tc_macro_msg9>
+		<tc_macro_msg10>删除</tc_macro_msg10>
+		<tc_macro_msg11>请输入宏名：</tc_macro_msg11>
+		<tc_macro_msg12>请输入延时值：</tc_macro_msg12>
+		<tc_macro_msg13>请输入目录名：</tc_macro_msg13>
+		<tc_macro_msg14>按键按下</tc_macro_msg14>
+		<tc_macro_msg15>按键弹起</tc_macro_msg15>
+		<tc_macro_msg16>延时</tc_macro_msg16>
+		<tc_macro_msg17>请先停止宏录制</tc_macro_msg17>
+		<tc_macro_msg18>此宏正在使用，不能删除</tc_macro_msg18>
+		<tc_macro_msg19>保存</tc_macro_msg19>
+		<tc_macro_msg20>重命名</tc_macro_msg20>
+		<tc_macro_msg21>批量导入</tc_macro_msg21>
+		<tc_macro_msg22>批量导出</tc_macro_msg22>
+
+		<tc_PL>播放/暂停</tc_PL>
+		<tc_stop>停止</tc_stop>
+		<tc_pre_media>上一曲</tc_pre_media>
+		<tc_next_media>下一曲</tc_next_media>
+		<tc_vol_up>音量加大</tc_vol_up>
+		<tc_vol_dw>音量减小</tc_vol_dw>
+		<tc_mute>静音</tc_mute>
+
+		<tc_msfun>鼠标按键</tc_msfun>	
+		<tc_click>左键</tc_click>
+		<tc_menu>右键</tc_menu>
+		<tc_middle>中键</tc_middle>
+		<tc_forward>前进</tc_forward>
+		<tc_back>后退</tc_back>
+		<tc_scrollup>向上滚</tc_scrollup>
+		<tc_scrolldown>向下滚</tc_scrolldown>
+		<tc_mac_def>宏定义</tc_mac_def>
+		<tc_key_off>禁用按键</tc_key_off>
+		<tc_macro_str8>插入鼠标按键</tc_macro_str8>
+		<tc_ms_str1>左键双击</tc_ms_str1>
+		<tc_ms_str2>右键双击</tc_ms_str2>
+		<tc_ms_str3>中键双击</tc_ms_str3>
+		
+		<tc_kbmedia_stop>停止</tc_kbmedia_stop>
+		<tc_kbmedia_search>搜索</tc_kbmedia_search>
+		<tc_kbmedia_mail>邮件</tc_kbmedia_mail>
+		<tc_kbmedia_main>主页</tc_kbmedia_main>
+		<tc_kbmedia_explore>资源管理器</tc_kbmedia_explore>
+		<tc_kbmedia_cal>计算器</tc_kbmedia_cal>
+		<tc_kbmedia_refresh>刷新</tc_kbmedia_refresh>
+		<tc_kbmedia_favor>收藏夹</tc_kbmedia_favor>
+		<tc_kbmedia_msel>播放器</tc_kbmedia_msel>
+		
+		<tc_combokey>组合键</tc_combokey>
+		<tc_media>多媒体功能</tc_media>
+		<tc_combo_tips>请输入一个单键或组合键:</tc_combo_tips>
+
+		<tc_msg1>灯光</tc_msg1>
+		<tc_msg2>请输入配置文件名：</tc_msg2>
+		<tc_msg3>未选中任何一个按键功能</tc_msg3>
+		<tc_msg4>请输入名称</tc_msg4>
+		<tc_msg5>是否需要恢复默认设置？</tc_msg5>
+		<tc_msg6>确定删除？</tc_msg6>
+		<tc_msg7>请输入一个按键</tc_msg7>
+		<tc_msg8>至少要保留一个配置文件</tc_msg8>
+		<tc_msg9>当前没有可用的宏定义.</tc_msg9>
+		<tc_msg10>请先选择一种手势</tc_msg10>
+		<tc_msg11>检测到多个设备，请只保留一个设备连接到PC</tc_msg11>
+		<tc_msg12>请稍等，程序正在更新设定...</tc_msg12>
+		<tc_msg13>请先在界面上选择一个按键</tc_msg13>
+		<tc_msg14>确认恢复该按键到默认功能？</tc_msg14>
+		<tc_msg15>未检测到键盘</tc_msg15>
+		<tc_msg16>灯光模式切换</tc_msg16>
+		<tc_msg17>灯光颜色切换</tc_msg17>
+		<tc_msg18>灯光速度切换</tc_msg18>
+		<tc_msg19>灯光亮度切换</tc_msg19>
+		<tc_msg20>按键设置</tc_msg20>
+		<tc_msg21>无功能</tc_msg21>
+		<tc_msg22>火力键按键</tc_msg22>
+		<tc_msg23>带边框线的按键表示该按键的默认功能已被更改</tc_msg23>
+		<tc_msg24>手势的功能</tc_msg24>
+		<tc_msg25>宏</tc_msg25>
+		<tc_msg26>4键</tc_msg26>
+		<tc_msg27>5键</tc_msg27>
+		<tc_msg28>颜色配置组</tc_msg28>
+		<tc_msg29>L-Tilt Wheel</tc_msg29>
+		<tc_msg30>R-Tilt Wheel</tc_msg30>
+		<tc_msg31>关联程序</tc_msg31>
+		<tc_msg32>导出配置</tc_msg32>
+		<tc_msg33>导入配置</tc_msg33>
+		<tc_msg34>按键当前功能 ：  </tc_msg34>
+		<tc_msg35>删除当前配置</tc_msg35>
+		<tc_msg36>默认功能</tc_msg36>
+
+		<tc_dpi></tc_dpi>
+		<tc_dpiadd>加</tc_dpiadd>
+		<tc_dpisub>减</tc_dpisub>
+		<tc_dpiloop>循环</tc_dpiloop>
+
+		<tc_three>三连发</tc_three>
+		<tc_fire>火力键</tc_fire>
+		<tc_rgb>RGB打开/关闭</tc_rgb>
+		<tc_singlekey>单键</tc_singlekey>
+
+		<tc_windows>Windows</tc_windows>
+		<tc_shift>单键或组合键</tc_shift>
+
+		<tc_led_mode1>常亮模式 </tc_led_mode1>
+		<tc_led_mode2>呼吸模式 </tc_led_mode2>
+		<tc_led_mode3>梦幻彩虹 </tc_led_mode3>
+		<tc_led_mode4>一触即发 </tc_led_mode4>
+		<tc_led_mode5>雨中漫步</tc_led_mode5>
+		<tc_led_mode6>彩虹轮盘</tc_led_mode6>
+		<tc_led_mode7>按键涟漪</tc_led_mode7>
+		<tc_led_mode8>繁星点点</tc_led_mode8>
+		<tc_led_mode9>踏雪无痕</tc_led_mode9>
+		<tc_led_mode10>川流不息</tc_led_mode10>
+		<tc_led_mode11>随波逐流</tc_led_mode11>
+		<tc_led_mode12>如影随形</tc_led_mode12>
+		<tc_led_mode13>正弦光波</tc_led_mode13>
+		<tc_led_mode14>左右扫描</tc_led_mode14>
+		<tc_led_mode15>旋转风车</tc_led_mode15>
+		<tc_led_mode16>七彩瀑布</tc_led_mode16>
+		<tc_led_mode17>花开富贵</tc_led_mode17>
+		<tc_led_mode18>旋转风暴</tc_led_mode18>
+		<tc_led_mode19>来回碰撞</tc_led_mode19>
+		<tc_led_mode20>十全十美</tc_led_mode20>
+		<tc_led_mode21>自定义</tc_led_mode21>
+		<tc_led_mode22>关闭</tc_led_mode22>
+
+		<tc_game_mode1>定义1</tc_game_mode1>
+		<tc_game_mode2>定义2</tc_game_mode2>
+		<tc_game_mode3>定义3</tc_game_mode3>
+		<tc_game_mode4>定义4</tc_game_mode4>
+		<tc_game_mode5>定义5</tc_game_mode5>
+		<tc_game_mode6></tc_game_mode6>
+		<tc_game_mode7></tc_game_mode7>
+		<tc_game_mode8></tc_game_mode8>
+		<tc_game_mode9></tc_game_mode9>
+		<tc_game_mode10></tc_game_mode10>
+
+		<tc_adv_str1>速度 +</tc_adv_str1>
+		<tc_adv_str2>速度 -</tc_adv_str2>
+		<tc_adv_str3>按键颜色</tc_adv_str3>
+		<tc_adv_str4>基本颜色</tc_adv_str4>
+		<tc_adv_str5>亮度+</tc_adv_str5>
+		<tc_adv_str6>亮度-</tc_adv_str6>
+		<tc_adv_str7>亮度</tc_adv_str7>
+		<tc_adv_str8>常亮</tc_adv_str8>
+		<tc_adv_str9>呼吸</tc_adv_str9>
+		<tc_adv_str10>闪烁</tc_adv_str10>
+		<tc_adv_str11>灯光模式</tc_adv_str11>
+		<tc_adv_str12>颜色</tc_adv_str12>
+		<tc_adv_str13>方向</tc_adv_str13>
+		<tc_adv_str14>混色</tc_adv_str14>
+		<tc_adv_str15>选取一个自定义颜色</tc_adv_str15>
+		<tc_adv_str16>循环切换</tc_adv_str16>
+		<tc_adv_str17>循环呼吸</tc_adv_str17>
+		<tc_adv_str18></tc_adv_str18>
+		<tc_adv_str19>速度</tc_adv_str19>
+	</config>
+</root>

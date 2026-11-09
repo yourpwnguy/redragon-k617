@@ -1,0 +1,11 @@
+Third-party assets
+==================
+
+The vendor skin PNGs and the English/Simplified Chinese text XML files under
+assets/gui come from the official Redragon K617 RGB 1.6.6 installer. They are
+included so the Linux GUI can reproduce the vendor layout for interoperability
+with hardware the user owns. They remain the property of their respective
+owner and are not covered by the MIT license that applies to this project's
+source code.
+
+The bundled DejaVu Sans font is covered by assets/gui/DejaVu-LICENSE.txt.

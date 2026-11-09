@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Redragon K617
+Comment=Control the Redragon K617 RGB keyboard
+Exec=redragon-k617-gui
+TryExec=redragon-k617-gui
+Icon=redragon-k617
+Terminal=false
+Categories=Utility;
+Keywords=redragon;k617;rgb;keyboard;
+StartupWMClass=Redragon K617-RGB
+StartupNotify=false
