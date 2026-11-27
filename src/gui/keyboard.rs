@@ -2,9 +2,11 @@
 //!
 //! The key rectangles come from the vendor `Cfg.ini` `[KEY]` section, so the
 //! preview is not an approximation: Esc is at (13,14)-(37,42) inside the
-//! 560x212 keyboard image, exactly like the Windows app. Clicking a key in
-//! Self-define mode assigns the current colour; clicking in any mode selects
-//! the key for the "current function" readout.
+//! 560x212 keyboard image, exactly like the Windows app. Clicking a key
+//! selects it for the "current function" readout. In Self-define mode the
+//! old report-8 path used to paint the key, but that frame can reset some
+//! firmware revisions, so the GUI now shows a "preview-only" warning and
+//! leaves the device alone.
 
 use eframe::egui::{self, Color32, Id, Rect, Sense, Stroke, Ui};
 
@@ -95,9 +97,10 @@ fn canonical(name: &str) -> &str {
 
 /// Draw the keyboard image and return the key the user clicked.
 ///
-/// `tint` is `Some` only for Self-define with RGB enabled. The vendor preview
-/// draws the per-key colours into the key caps and leaves the rest of the
-/// image untouched, which is what the alpha overlay below does.
+/// `tint` is `Some` only for Self-define with RGB enabled. This is a local
+/// preview: the GUI does not send per-key colours to the device because the
+/// report-8 path can reset some K617 firmware revisions. The vendor app uses
+/// report-6 colour groups instead.
 pub fn draw(
   ui: &Ui,
   assets: &Assets,

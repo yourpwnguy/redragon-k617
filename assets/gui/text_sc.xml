@@ -198,5 +198,6 @@
 		<tc_adv_str17>循环呼吸</tc_adv_str17>
 		<tc_adv_str18></tc_adv_str18>
 		<tc_adv_str19>速度</tc_adv_str19>
+		<tc_perkey_preview_only>单键颜色仅用于预览：报告 8 可能导致键盘复位。</tc_perkey_preview_only>
 	</config>
 </root>

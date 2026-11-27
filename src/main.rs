@@ -2,7 +2,8 @@
 //!
 //! The command surface mirrors the parts of the Windows app that actually
 //! touch the keyboard: firmware effects, base colour, speed, brightness,
-//! per-key colours and profiles. Everything is built on the same HID feature
+//! profiles, plus an opt-in non-vendor per-key experiment. Everything is
+//! built on the same HID feature
 //! reports the vendor software uses, so no kernel driver or firmware patch is
 //! involved.
 
@@ -23,7 +24,7 @@ use redragon_k617::protocol::{self, EffectParams, Rgb};
   long_about = "Linux userspace driver for the Redragon K617 RGB (258a:0049). \
                   It speaks the same HID feature reports as the official Windows \
                   software: 22 firmware effects, base colour, speed, brightness, \
-                  per-key colour and JSON profiles."
+                  JSON profiles, and an opt-in report-8 per-key experiment."
 )]
 struct Cli {
   /// Print the HID frames instead of sending them (no device access).
@@ -60,16 +61,29 @@ enum Command {
     /// Do not update the current profile.
     #[arg(long)]
     no_save: bool,
+    /// Also send the direct per-key frame. This is not the vendor path and
+    /// can reset some K617 firmware revisions; keep it off unless you know
+    /// your keyboard accepts report 8.
+    #[arg(long)]
+    unsafe_per_key: bool,
   },
-  /// Set every key to one colour (direct per-key frame).
+  /// Set the keyboard to one solid colour.
   Solid {
     /// Colour as RRGGBB / #RRGGBB / "r,g,b" / a name.
     color: String,
     /// Do not update the current profile.
     #[arg(long)]
     no_save: bool,
+    /// Also send the direct per-key frame. This is not the vendor path and
+    /// can reset some K617 firmware revisions; keep it off unless you know
+    /// your keyboard accepts report 8.
+    #[arg(long)]
+    unsafe_per_key: bool,
   },
   /// Set individual keys, e.g. `paint W=ff0000 Space=00ff00`.
+  ///
+  /// This needs the non-vendor report-8 path, which can reset some K617
+  /// firmware revisions. It is disabled unless `--unsafe-per-key` is given.
   Paint {
     /// KEY=COLOUR assignments.
     #[arg(required = true)]
@@ -80,6 +94,11 @@ enum Command {
     /// Do not update the current profile.
     #[arg(long)]
     no_save: bool,
+    /// Also send the direct per-key frame. This is not the vendor path and
+    /// can reset some K617 firmware revisions; keep it off unless you know
+    /// your keyboard accepts report 8.
+    #[arg(long)]
+    unsafe_per_key: bool,
   },
   /// Turn the lighting off.
   Off {
@@ -111,7 +130,13 @@ enum ProfileCommand {
   /// Save the current state under a name.
   Save { name: String },
   /// Apply a saved profile.
-  Load { name: String },
+  Load {
+    name: String,
+    /// Also send the per-key report 8 frame. This is not the vendor path and
+    /// can reset some K617 firmware revisions.
+    #[arg(long)]
+    unsafe_per_key: bool,
+  },
   /// Delete a saved profile.
   Delete { name: String },
   /// Print the current state as JSON.
@@ -155,16 +180,30 @@ fn run(cli: Cli) -> Result<()> {
       speed,
       brightness,
       no_save,
-    } => effect(cli.dry_run, &name, color, speed, brightness, no_save),
-    Command::Solid { color, no_save } => solid(cli.dry_run, &color, no_save),
+      unsafe_per_key,
+    } => effect(
+      cli.dry_run,
+      &name,
+      color,
+      speed,
+      brightness,
+      no_save,
+      unsafe_per_key,
+    ),
+    Command::Solid {
+      color,
+      no_save,
+      unsafe_per_key,
+    } => solid(cli.dry_run, &color, no_save, unsafe_per_key),
     Command::Paint {
       assignments,
       base,
       no_save,
-    } => paint(cli.dry_run, &assignments, &base, no_save),
+      unsafe_per_key,
+    } => paint(cli.dry_run, &assignments, &base, no_save, unsafe_per_key),
     Command::Off { no_save } => {
       let profile = Profile::new(Effect::Off, Rgb::OFF, 3, 3);
-      apply(cli.dry_run, &profile)?;
+      apply(cli.dry_run, &profile, false)?;
       if !no_save {
         profile::save_current(&profile)?;
       }
@@ -244,6 +283,7 @@ fn effect(
   speed: Option<u8>,
   brightness: Option<u8>,
   no_save: bool,
+  per_key: bool,
 ) -> Result<()> {
   let effect = Effect::parse(name)
     .ok_or_else(|| anyhow!("unknown effect {name:?}; run `redragon-k617 effects`"))?;
@@ -259,30 +299,49 @@ fn effect(
   let brightness =
     brightness.unwrap_or_else(|| current.as_ref().map(|p| p.brightness).unwrap_or(3));
   let profile = Profile::new(effect, color, speed, brightness);
-  apply(dry_run, &profile)?;
+  apply(dry_run, &profile, per_key)?;
   if !no_save {
     profile::save_current(&profile)?;
   }
   Ok(())
 }
 
-fn solid(dry_run: bool, color: &str, no_save: bool) -> Result<()> {
+fn solid(dry_run: bool, color: &str, no_save: bool, per_key: bool) -> Result<()> {
   let color = parse_color(color)?;
   let current = profile::load_current()?;
+  // Safe default: Fixed-on gives a real solid colour without touching the
+  // fragile per-key report. Only the explicit opt-in uses Self-define plus
+  // report 8.
+  let effect = if per_key {
+    Effect::SelfDefine
+  } else {
+    Effect::FixedOn
+  };
   let profile = Profile::new(
-    Effect::SelfDefine,
+    effect,
     color,
     current.as_ref().map(|p| p.speed).unwrap_or(3),
     current.as_ref().map(|p| p.brightness).unwrap_or(3),
   );
-  apply(dry_run, &profile)?;
+  apply(dry_run, &profile, per_key)?;
   if !no_save {
     profile::save_current(&profile)?;
   }
   Ok(())
 }
 
-fn paint(dry_run: bool, assignments: &[String], base: &str, no_save: bool) -> Result<()> {
+fn paint(
+  dry_run: bool,
+  assignments: &[String],
+  base: &str,
+  no_save: bool,
+  per_key: bool,
+) -> Result<()> {
+  if !per_key {
+    return Err(anyhow!(
+      "per-key painting needs the non-vendor report 8 path, which can reset some K617 firmware revisions; re-run with --unsafe-per-key only if you accept that risk."
+    ));
+  }
   let base = parse_color(base)?;
   let current = profile::load_current()?;
   let mut profile = Profile::new(
@@ -300,7 +359,7 @@ fn paint(dry_run: bool, assignments: &[String], base: &str, no_save: bool) -> Re
     let color = parse_color(color_name)?;
     profile.keys.insert(key.name.to_string(), color.to_hex());
   }
-  apply(dry_run, &profile)?;
+  apply(dry_run, &profile, per_key)?;
   if !no_save {
     profile::save_current(&profile)?;
   }
@@ -312,7 +371,7 @@ fn update_current(dry_run: bool, mutate: impl FnOnce(&mut Profile)) -> Result<()
     .context("reading the current profile")?
     .ok_or_else(|| anyhow!("no current profile yet; set an effect or colour first"))?;
   mutate(&mut profile);
-  apply(dry_run, &profile)?;
+  apply(dry_run, &profile, false)?;
   if !dry_run {
     profile::save_current(&profile)?;
   }
@@ -338,9 +397,17 @@ fn profile_command(dry_run: bool, command: ProfileCommand) -> Result<()> {
       println!("saved {} to {}", name, path.display());
       Ok(())
     }
-    ProfileCommand::Load { name } => {
+    ProfileCommand::Load {
+      name,
+      unsafe_per_key,
+    } => {
       let profile = profile::load_named(&name)?;
-      apply(dry_run, &profile)?;
+      if !unsafe_per_key && !profile.keys.is_empty() {
+        eprintln!(
+          "warning: {name} contains per-key colours; they are preview-only because report 8 can reset the keyboard. Pass --unsafe-per-key to send them."
+        );
+      }
+      apply(dry_run, &profile, unsafe_per_key)?;
       if !dry_run {
         profile::save_current(&profile)?;
       }
@@ -360,9 +427,11 @@ fn profile_command(dry_run: bool, command: ProfileCommand) -> Result<()> {
   }
 }
 
-/// Apply a profile: always send the firmware burst so the mode/colour/speed
-/// are committed, then send the direct per-key frame for self-define profiles.
-fn apply(dry_run: bool, profile: &Profile) -> Result<()> {
+/// Apply a profile. The five-frame firmware burst is always sent. The
+/// optional report-8 per-key frame is non-vendor: the official app uses
+/// report 6 LED-matrix blocks instead, and report 8 has been observed to
+/// reset some K617 firmware revisions when the base colour changes.
+fn apply(dry_run: bool, profile: &Profile, per_key: bool) -> Result<()> {
   let effect = profile.effect()?;
   let color = profile.color()?;
   let params = EffectParams {
@@ -372,6 +441,17 @@ fn apply(dry_run: bool, profile: &Profile) -> Result<()> {
     brightness: profile.brightness,
   };
   if effect == Effect::SelfDefine {
+    if !per_key {
+      if dry_run {
+        for (index, frame) in protocol::effect_burst(params).iter().enumerate() {
+          print_frame(&format!("frame {index}"), frame);
+        }
+        return Ok(());
+      }
+      let keyboard = Keyboard::open()?;
+      keyboard.apply_effect(params)?;
+      return Ok(());
+    }
     let overrides = profile.key_overrides()?;
     let frame = if overrides.is_empty() {
       protocol::solid_frame(color)

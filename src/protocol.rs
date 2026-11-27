@@ -8,6 +8,12 @@
 //! * report 0x06, 1032 bytes - 8-byte block header + 1024-byte payload
 //! * report 0x08, 382 bytes - direct per-key LED frame (Sinodragon)
 //!
+//! Report 8 is **not** what the official app uses for Self-define, and on the
+//! tested K617 firmware it can reset the keyboard when the base colour
+//! changes. The CLI keeps it behind `--unsafe-per-key`; the GUI never sends
+//! it. The vendor path uses report-6 `06 09` LED-matrix blocks, which are
+//! documented in `docs/PROTOCOL.md`.
+//!
 //! The Windows app builds each 1032-byte block with one of four opcodes:
 //!
 //! ```text
@@ -190,6 +196,10 @@ pub const STATE_SPEED_BRIGHT: [usize; 2] = COMMIT_SPEED_BRIGHT;
 ///
 /// The Sinodragon frame carries 96 RGB slots (16 columns x 6 rows) in
 /// column-major order. Slots that do not exist on the K617 are left black.
+///
+/// This is not the vendor Self-define path. Some K617 firmware revisions
+/// reset when this frame is combined with certain base colours, so the CLI
+/// only calls it behind `--unsafe-per-key` and the GUI never calls it.
 pub fn per_key_frame(colors: &[(KeyDef, Rgb)]) -> Vec<u8> {
   let mut frame = vec![0u8; PERKEY_FRAME_LEN];
   frame[0] = PERKEY_REPORT;
@@ -207,7 +217,10 @@ pub fn per_key_frame(colors: &[(KeyDef, Rgb)]) -> Vec<u8> {
   frame
 }
 
-/// A solid colour across all 61 keys.
+/// A solid colour across all 61 keys in the report-8 format.
+///
+/// The safe `solid` command does not use this; it selects the firmware
+/// Fixed-on effect instead. This helper exists for the explicit unsafe path.
 pub fn solid_frame(color: Rgb) -> Vec<u8> {
   let colors: Vec<(KeyDef, Rgb)> = crate::keymap::KEYS.iter().map(|k| (*k, color)).collect();
   per_key_frame(&colors)
@@ -215,6 +228,9 @@ pub fn solid_frame(color: Rgb) -> Vec<u8> {
 
 /// Build a per-key frame from `led_index -> colour` overrides, filling every
 /// other key with `base`.
+///
+/// As with [`per_key_frame`], this is the non-vendor report-8 path and must
+/// stay behind an explicit opt-in.
 pub fn per_key_frame_with_base(base: Rgb, overrides: &[(usize, Rgb)]) -> Vec<u8> {
   let mut frame = vec![0u8; PERKEY_FRAME_LEN];
   frame[0] = PERKEY_REPORT;

@@ -199,5 +199,6 @@
 		<tc_adv_str17>Colorful</tc_adv_str17>
 		<tc_adv_str18>Fast</tc_adv_str18>
 		<tc_adv_str19>Speed</tc_adv_str19>
+		<tc_perkey_preview_only>Per-key colours are preview-only: report 8 can reset this keyboard.</tc_perkey_preview_only>
 	</config>
 </root>

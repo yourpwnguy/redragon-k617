@@ -24,7 +24,7 @@ use super::GameAction;
 use super::MacroEditor;
 
 pub const WINDOW_SIZE: [f32; 2] = [1000.0, 640.0];
-const PRESET_COLORS: [Rgb; 6] = [
+const PRESET_COLORS: [Rgb; 9] = [
   Rgb { r: 255, g: 0, b: 0 },
   Rgb { r: 0, g: 255, b: 0 },
   Rgb { r: 0, g: 0, b: 255 },
@@ -36,6 +36,21 @@ const PRESET_COLORS: [Rgb; 6] = [
   Rgb { r: 0, g: 128, b: 0 },
   Rgb {
     r: 0,
+    g: 255,
+    b: 255,
+  },
+  Rgb {
+    r: 255,
+    g: 255,
+    b: 0,
+  },
+  Rgb {
+    r: 255,
+    g: 128,
+    b: 0,
+  },
+  Rgb {
+    r: 255,
     g: 255,
     b: 255,
   },
@@ -202,18 +217,13 @@ impl App {
       speed: self.draft.speed,
       brightness: self.draft.brightness,
     };
+    // We deliberately do not send the non-vendor report-8 per-key frame
+    // here. The official app uses report 6 LED-matrix blocks, and report 8
+    // has been observed to reset some K617 firmware revisions when the base
+    // colour changes. The GUI preview still shows the per-key map, but the
+    // device only receives the safe five-frame firmware burst.
     let result = (|| -> anyhow::Result<()> {
       keyboard.apply_effect(params)?;
-      if effect == Effect::SelfDefine {
-        let overrides = if self.rgb_enabled {
-          self.draft.key_overrides()?
-        } else {
-          Vec::new()
-        };
-        let base = if self.rgb_enabled { color } else { Rgb::OFF };
-        let frame = protocol::per_key_frame_with_base(base, &overrides);
-        keyboard.send_per_key(&frame)?;
-      }
       Ok(())
     })();
     match result {
@@ -325,13 +335,12 @@ impl App {
         self.selected_key = Some(index);
         if right {
           let name = keyboard::name_of(index);
-          self.draft.keys.remove(name);
-          self.mark_dirty();
-        } else if self.draft.effect().ok() == Some(Effect::SelfDefine) && self.rgb_enabled {
-          let name = keyboard::name_of(index);
-          let color = self.draft.color().unwrap_or(Rgb::new(255, 0, 0));
-          self.draft.keys.insert(name.to_string(), color.to_hex());
-          self.mark_dirty();
+          if self.draft.keys.remove(name).is_some() {
+            self.mark_dirty();
+          }
+        } else if self.draft.effect().ok() == Some(Effect::SelfDefine) {
+          let message = self.t("tc_perkey_preview_only").to_string();
+          self.set_status(message, 4);
         }
       }
       GameAction::SelectProfile(index) => self.switch_profile(index),
@@ -573,13 +582,13 @@ impl App {
       false,
     );
 
-    // Preset colour squares: three columns, two rows, exactly like the
-    // vendor panel (red/green/blue then magenta/dark-green/cyan).
+    // Preset colour squares: the vendor palette is a 3x3 grid
+    // (red/green/blue, magenta/dark-green/cyan, yellow/orange/white).
     for (index, preset) in PRESET_COLORS.iter().enumerate() {
       let col = index % 3;
       let row = index / 3;
       let rect = Rect::from_min_size(
-        egui::pos2(680.0 + col as f32 * 27.0, 424.0 + row as f32 * 22.0),
+        egui::pos2(680.0 + col as f32 * 27.0, 429.0 + row as f32 * 27.0),
         egui::vec2(22.0, 22.0),
       );
       ui.painter()

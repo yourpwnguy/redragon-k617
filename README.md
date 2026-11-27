@@ -6,9 +6,12 @@ CLI and a skinned GUI that speak the same HID feature reports as the official
 software.
 
 This is a port of the vendor app's device layer, not a generic RGB daemon: the
-22 firmware effects, base colour, speed, brightness, per-key colour and JSON
-profiles all use the exact packet formats recovered from
-`KeyboardDrv.exe` 1.6.6 (the installer in the parent directory).
+22 firmware effects, base colour, speed, brightness and JSON profiles use the
+packet formats recovered from `KeyboardDrv.exe` 1.6.6 (the installer in the
+parent directory). Per-key colour is supported only through the vendor's
+`06 09` LED-matrix blocks, which are still being decoded; the non-vendor
+report-8 shortcut is kept behind an explicit unsafe flag because it can reset
+some K617 firmware revisions.
 
 ## Status
 
@@ -19,7 +22,8 @@ profiles all use the exact packet formats recovered from
 | 22 firmware effects | done |
 | Base colour, speed, brightness | done |
 | Read committed state | done |
-| Per-key colour (61 keys) | done |
+| Per-key colour (61 keys) | preview-only; vendor `06 09` colour groups not fully decoded |
+| Non-vendor report-8 per-key frames | opt-in with `--unsafe-per-key`; can reset some firmware |
 | Saved profiles | done (JSON, not the vendor `.pro` format) |
 | 1:1 skinned GUI (1000x640 main window + Light panel + Macro Editor) | done |
 | GUI language switch (English / Simplified Chinese) | done |
@@ -92,9 +96,16 @@ same 1000x640 skinned canvas as the vendor app:
 ![Light panel](docs/screenshots/light-panel.png)
 
 The Light panel and keyboard preview are live: selecting a mode or dragging a
-slider sends the same five-frame burst as the Windows app, clicking a key in
-Self-define mode assigns the current colour, and the profile buttons switch
-between three independent saved profiles.
+slider sends the same five-frame burst as the Windows app, and the profile
+buttons switch between three independent saved profiles. The palette matches
+the vendor 3x3 swatches (including dark green, cyan, yellow, orange and white).
+
+Self-define is safe again: the GUI now sends only the vendor five-frame burst.
+It does not send the non-vendor report-8 per-key frame, which was observed to
+reset the keyboard when the base colour changed to some palette values. The
+preview still shows a per-key map, but clicking a key in Self-define mode only
+selects it and shows a "preview-only" warning; the keyboard keeps its current
+vendor colour-group matrix.
 
 ![Macro Editor](docs/screenshots/macro-editor.png)
 
@@ -112,7 +123,8 @@ missing.
 GUI gaps, kept explicit so they do not look like finished features:
 
 - the Key assignment page (media keys, macro binding, disable) is not ported;
-  clicking a key selects it, and in Self-define mode paints it;
+- the vendor Self-define colour-group editor (Define1..5, per-group colours)
+  is not fully decoded yet, so per-key colours stay preview-only for now;
 - the tray icon, hotplug watcher and native file dialogs are not implemented;
 - macro upload to the keyboard and firmware update are not implemented;
 - the vendor `.pro` profile format is not decoded (JSON is used instead).
@@ -130,9 +142,11 @@ redragon-k617 effect retro-snake --color 3366ff
 redragon-k617 brightness 1
 redragon-k617 speed 4
 
-# per-key colour (everything not listed uses --base, default black)
+# solid colour: safe Fixed-on effect, no report-8 frame
 redragon-k617 solid ff0000
-redragon-k617 paint W=00ff00 Space=0000ff A=ffff00 --base 111111
+
+# per-key colour is opt-in because report 8 can reset some firmware
+redragon-k617 paint W=00ff00 Space=0000ff A=ffff00 --base 111111 --unsafe-per-key
 
 # turn the lighting off
 redragon-k617 off
@@ -153,10 +167,18 @@ Key names are the US ANSI names (`Escape`, `Tab`, `CapsLock`, `LShift`, `LCtrl`,
 all 61. Short forms such as `Esc`, `Ctrl`, `Win`, `Return`, `;` and `[` work
 too.
 
-Per-key colours are sent as direct report-8 frames and are re-applied from the
-JSON profile by `redragon-k617 profile load`. The firmware effect itself is
-committed to the keyboard's flash; the per-key overlay is a host-side state, so
-run `profile load` after a reboot if you want it back automatically.
+`solid` uses the firmware Fixed-on mode, which is the safe way to get one
+colour across the keyboard. Per-key colours use the non-vendor report-8 frame
+and are therefore opt-in: `--unsafe-per-key` must be passed explicitly, because
+on the tested K617 firmware some base colours reset the keyboard when report 8
+is used. The official app does not send report 8 at all; it writes `06 09` LED
+matrix blocks for its colour groups. That vendor format is documented as a
+remaining gap, not silently replaced by the unsafe path.
+
+Loading a saved profile with per-key entries prints a warning and applies only
+the safe firmware burst unless `--unsafe-per-key` is passed. The firmware effect
+itself is committed to the keyboard's flash, so it survives a reboot; the
+report-8 overlay is host-side state and is not re-applied automatically.
 
 Use `--dry-run` before a command to print the frames without touching the
 keyboard:
@@ -175,7 +197,7 @@ usage `0x0001`) with four report IDs:
 | `0x03` | 3 bytes | status/input from the keyboard |
 | `0x05` | 6 bytes | handshake and short commands |
 | `0x06` | 1032 bytes | 8-byte block header + 1024-byte payload |
-| `0x08` | 382 bytes | direct per-key LED frame |
+| `0x08` | 382 bytes | direct per-key LED frame (non-vendor, unsafe on some firmware) |
 
 An effect change is a five-frame burst:
 
@@ -188,8 +210,11 @@ An effect change is a five-frame burst:
 ```
 
 The firmware generates the animation; the host only supplies the effect index,
-base colour and a packed speed/brightness nibble. Per-key colour uses the
-Sinodragon frame (`08 0a 7a 01` + 96 RGB slots, column-major).
+base colour and a packed speed/brightness nibble. The official app implements
+Self-define with `06 09` LED-matrix blocks and five colour groups (Define1..5),
+not report 8. The Sinodragon frame (`08 0a 7a 01` + 96 RGB slots, column-major)
+is kept as an opt-in experiment because it is simple and works on some K617
+units, but it is not the vendor path and can reset others.
 
 The full packet layout, including the emulation harness used to recover it, is
 documented in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
@@ -203,6 +228,10 @@ documented in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
   make the keyboard disconnect until it re-enumerates, which is why the sizes
   here are strict.
 - `redragon-k617 info` is safe to run at any time.
+- Do not use `--unsafe-per-key` on a keyboard that has not been tested with
+  report 8. On the tested unit, changing the Self-define base colour with
+  report 8 reset the USB device and made it stop responding until it
+  re-enumerated. The default paths never send report 8.
 
 ## Verification
 
@@ -211,11 +240,16 @@ The implementation was checked against real K617 hardware:
 - password query returns `02 00 00 00 00 1a`;
 - every effect index 1..22 is accepted and echoed back by the state read;
 - speed/brightness nibbles are echoed back at commit offsets 69/71;
-- per-key frames are accepted without disconnecting the device;
+- the vendor `06 09` block layout was captured from the official app under
+  Wine; the app does not use report 8 for Self-define;
+- report 8 was reproduced as the cause of the disconnect: a burst-only
+  Self-define update with dark green and cyan stays connected, while the old
+  burst-plus-report-8 path reset the device on the tested firmware;
 - the GUI main window, Light panel and Macro Editor were compared against the
   official 1.6.6 app running under Wine (screenshots in `docs/screenshots/`),
   and the GUI controls were used to switch effects, change speed/brightness,
-  paint keys and save profiles on the real keyboard.
+  the dark-green, cyan and white palette entries (the path that used to reset
+  the keyboard) and save profiles on the real keyboard.
 
 Build checks:
 

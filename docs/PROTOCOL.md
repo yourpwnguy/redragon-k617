@@ -120,7 +120,12 @@ low  nibble = brightness (1..4 in the UI)
 
 Example: speed 4, brightness 2 -> `0x42`.
 
-## Per-key frame (report 8)
+## Per-key frame (report 8, non-vendor and unsafe)
+
+> **Warning:** the official Redragon app does not use report 8. On the tested
+> K617 firmware, sending this frame together with a Self-define base colour
+> reset the USB device (dark green and cyan were reproducible). The CLI keeps
+> the command behind `--unsafe-per-key`; the GUI never sends it.
 
 The direct per-key frame is the Sinodragon format:
 
@@ -144,6 +149,27 @@ CapsLock=3, LShift=4, LCtrl=5, J=45, Space=35, Enter=81):
 
 Slots that do not exist on the K617 stay black.
 
+## Self-define in the official app
+
+The official app implements Self-define differently. Instead of report 8 it
+sends two `06 09` LED-matrix blocks (cursor bytes `0xbc` and `0xc0`) plus the
+usual `06 03 b6` commit. The Self-define panel has five colour groups
+(`Define1`..`Define5`) and a 3x3 static palette:
+
+| Row | Colours |
+| --- | --- |
+| 0 | red, green, blue |
+| 1 | magenta, dark green, cyan |
+| 2 | yellow, orange, white |
+
+Clicking a key in the preview toggles that key's membership in the selected
+group and immediately rewrites the two `09` blocks. The group index is carried
+in the commit block (byte 22 is `0x20` for Define1, `0x21` for Define2, and so
+on). The `09` payloads look like a packed key bitmap rather than raw RGB, and
+the per-group colour encoding is not fully decoded yet. This is why the Linux
+GUI keeps per-key colours in the preview but sends only the safe five-frame
+burst to the device.
+
 ## How the frames were recovered
 
 The Windows packet builders are pure once `memset`, `memcpy`, the security
@@ -159,6 +185,10 @@ Windows app passes 9 bytes to report 5 and that hidraw must not do that.
   block contains a parameter table whose first byte per entry looks like a
   direction/group selector, but the exact mapping was not confirmed on
   hardware, so the CLI does not expose it yet.
+- **Self-define colour groups.** The two `06 09` matrix blocks and the commit
+  group index are captured, but the packed key bitmap and per-group colour
+  format are not fully decoded. Report 8 is not a safe substitute: it can
+  reset the keyboard on some firmware revisions.
 - **Key remapping and macros.** The frames are known (`05 xx ...` for the key
   matrix and `84 d4` on report 5 for macro data), but the 1024-byte matrix is
   produced by a byte-swapping document model that depends on the vendor app's
