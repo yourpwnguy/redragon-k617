@@ -131,6 +131,12 @@ mod tests {
   }
 
   #[test]
+  fn right_side_uses_vendor_slots() {
+    assert_eq!(crate::keymap::find("Menu").unwrap().sinodragon_slot, 77);
+    assert_eq!(crate::keymap::find("RCtrl").unwrap().sinodragon_slot, 83);
+  }
+
+  #[test]
   fn two_humps_alternate_with_centre() {
     fn average_y(phase: f32, lo: f32, hi: f32) -> f32 {
       let mut sum = 0.0;

@@ -145,7 +145,7 @@ CapsLock=3, LShift=4, LCtrl=5, J=45, Space=35, Enter=81):
 | 1 | Tab 2, Q 8, W 14, E 20, R 26, T 32, Y 38, U 44, I 50, O 56, P 62, [ 68, ] 74, \ 80 |
 | 2 | Caps 3, A 9, S 15, D 21, F 27, G 33, H 39, J 45, K 51, L 57, ; 63, ' 69, Enter 81 |
 | 3 | LShift 4, Z 10, X 16, C 22, V 28, B 34, N 40, M 46, , 52, . 58, / 64, RShift 82 |
-| 4 | LCtrl 5, LWin 11, LAlt 17, Space 35, RAlt 53, Fn 59, Menu 65, RCtrl 71 |
+| 4 | LCtrl 5, LWin 11, LAlt 17, Space 35, RAlt 53, Fn 59, Menu 77, RCtrl 83 |
 
 Slots that do not exist on the K617 stay black.
 

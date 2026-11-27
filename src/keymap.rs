@@ -89,8 +89,8 @@ pub const KEYS: [KeyDef; KEY_COUNT] = [
   key!("Space", 56, 35),
   key!("RAlt", 57, 53),
   key!("Fn", 58, 59),
-  key!("Menu", 59, 65),
-  key!("RCtrl", 60, 71),
+  key!("Menu", 59, 77),
+  key!("RCtrl", 60, 83),
 ];
 
 pub const KEY_COUNT: usize = 61;
