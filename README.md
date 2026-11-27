@@ -107,6 +107,11 @@ preview still shows a per-key map, but clicking a key in Self-define mode only
 selects it and shows a "preview-only" warning; the keyboard keeps its current
 vendor colour-group matrix.
 
+Because the vendor's Self-define colour groups are not decoded yet, choosing a
+static palette colour or using the colour picker while Self-define is selected
+switches the effect to Fixed-on. Fixed-on is the firmware's real solid-colour
+mode, so the keyboard changes immediately and stays connected.
+
 ![Macro Editor](docs/screenshots/macro-editor.png)
 
 The Macro Editor stores macros in `~/.config/redragon-k617/macros.json`. It can
@@ -125,6 +130,7 @@ GUI gaps, kept explicit so they do not look like finished features:
 - the Key assignment page (media keys, macro binding, disable) is not ported;
 - the vendor Self-define colour-group editor (Define1..5, per-group colours)
   is not fully decoded yet, so per-key colours stay preview-only for now;
+  static colours use Fixed-on until that format is implemented;
 - the tray icon, hotplug watcher and native file dialogs are not implemented;
 - macro upload to the keyboard and firmware update are not implemented;
 - the vendor `.pro` profile format is not decoded (JSON is used instead).

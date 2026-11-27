@@ -168,7 +168,9 @@ in the commit block (byte 22 is `0x20` for Define1, `0x21` for Define2, and so
 on). The `09` payloads look like a packed key bitmap rather than raw RGB, and
 the per-group colour encoding is not fully decoded yet. This is why the Linux
 GUI keeps per-key colours in the preview but sends only the safe five-frame
-burst to the device.
+burst to the device. When the user picks a static palette colour or uses the
+colour picker from the generic Light panel, the GUI switches to Fixed-on
+(mode 1) so the requested solid colour is actually shown.
 
 ## How the frames were recovered
 

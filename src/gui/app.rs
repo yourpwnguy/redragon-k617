@@ -321,6 +321,13 @@ impl App {
       }
       GameAction::SetColor(color) => {
         self.draft.color = color.to_hex();
+        // Self-define is a per-key colour-group mode in the vendor app and
+        // ignores the plain base colour on this firmware. Until those groups
+        // are decoded, a static palette/colour-picker choice is applied with
+        // the Fixed-on effect, which is the firmware's real solid colour mode.
+        if self.draft.effect().ok() == Some(Effect::SelfDefine) {
+          self.draft.effect = Effect::FixedOn.name().to_string();
+        }
         self.mark_dirty();
       }
       GameAction::SetSpeed(value) => {
