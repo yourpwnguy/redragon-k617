@@ -103,7 +103,7 @@ enum Command {
     #[arg(long)]
     unsafe_per_key: bool,
   },
-  /// Stream the thick red S-wave snake effect.
+  /// Stream the thick red pulsing wave effect.
   ///
   /// This is a host-side animation and uses the non-vendor report-8 frame.
   /// Keep the first runs short.
@@ -114,7 +114,7 @@ enum Command {
     /// Frames per second.
     #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u64).range(1..=60))]
     fps: u64,
-    /// Vertical wave speed in radians per second.
+    /// Pulse speed in radians per second.
     #[arg(long, default_value_t = 2.6)]
     speed: f32,
   },

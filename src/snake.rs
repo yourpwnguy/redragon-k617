@@ -1,15 +1,13 @@
-//! Host-side thick S-wave snake effect.
+//! Host-side pulsing red wave effect.
 //!
-//! This is a monochrome red wave that spans the keyboard horizontally. The
-//! body is a thick band around a sine centreline, with a small amount of
-//! smooth thickness variation so the edges look distressed rather than
-//! laser-cut. The whole S curve bobs up and down around the centre line and
-//! slowly breathes; it does not travel left to right.
+//! This is a monochrome red standing wave with two humps. At one phase the
+//! two inner humps touch the top while the centre and the two ends touch the
+//! bottom. At the opposite phase it flips: the humps go down while the centre
+//! and ends go up. The band is thick, spans the full keyboard, and every key
+//! outside it stays black.
 //!
-//! The geometry uses the Sinodragon matrix slots (16 columns x 6 rows) rather
-//! than pixel coordinates, so the same frame works for the CLI streamer and a
-//! future GUI preview. Only the keys inside the band are non-black; every
-//! other key is switched off.
+//! The geometry uses the real key centres, so wide keys such as Space are
+//! included. Only the keys inside the band are non-black.
 
 use std::f32::consts::TAU;
 
@@ -18,25 +16,27 @@ use crate::protocol::Rgb;
 
 /// Vertical centre of the wave, 0 = top of the key area, 1 = bottom.
 const CENTRE: f32 = 0.50;
-/// How far the S curve swings above and below `CENTRE`.
-const AMPLITUDE: f32 = 0.26;
-/// How far the whole curve bobs up and down around the centre line.
-const BOB: f32 = 0.18;
-/// Small shape breathing so the S curve does not look mechanically fixed.
-const BREATHE: f32 = 0.22;
-/// Fixed phase offset that puts an S crest at the spacebar and a trough at
-/// the number row, so the vertical bob reaches both the top and bottom rows.
-const PHASE0: f32 = -2.735;
-/// Number of full S curves across the used keyboard width.
-const PERIODS: f32 = 1.5;
+/// How far the humps swing above and below `CENTRE`.
+const AMPLITUDE: f32 = 0.32;
+/// Permanent arch so the wave never becomes a straight line.
+const STATIC: f32 = 0.08;
+/// Sharpens the pulse. The wave spends most of the cycle at the two
+/// extremes and flips through the middle quickly instead of lingering flat.
+const PULSE_K: f32 = 5.0;
 /// Base half-thickness as a fraction of the key-area height. The band is
-/// deliberately fat: about two and a half visible key rows, not a single row.
-const THICKNESS: f32 = 0.24;
+/// deliberately fat: about two visible key rows, not a single row.
+const THICKNESS: f32 = 0.18;
 /// Bounds of the key area inside the 560x212 preview image.
 const X_MIN: f32 = 13.0;
 const X_MAX: f32 = 547.0;
 const Y_MIN: f32 = 14.0;
 const Y_MAX: f32 = 188.0;
+
+/// Sharpened sine in -1..1. The `tanh` spends most of the cycle near the
+/// extremes, so the direction change is quick and the wave never looks flat.
+fn pulse(phase: f32) -> f32 {
+  (PULSE_K * phase.sin()).tanh() / PULSE_K.tanh()
+}
 
 /// One animation frame. Returns one colour per K617 key. Unlit keys are black.
 pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
@@ -49,11 +49,13 @@ pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
       let (cx, cy) = CENTERS[index];
       let x = ((cx - X_MIN) / (X_MAX - X_MIN)).clamp(0.0, 1.0);
       let y = ((cy - Y_MIN) / (Y_MAX - Y_MIN)).clamp(0.0, 1.0);
-      // Vertical bobbing plus a slow curve breathing. The phase no longer
-      // translates the wave horizontally.
-      let bob = BOB * (phase * 0.95).sin();
-      let breathe = BREATHE * (phase * 0.55).sin();
-      let centre = CENTRE + bob + AMPLITUDE * (TAU * PERIODS * x + PHASE0 + breathe).sin();
+      // cos(4*pi*x) is +1 at the centre and the two ends, -1 at the two
+      // inner humps. The sharpened sine pulses between "humps up" and
+      // "humps down" and crosses the middle quickly, so it never sits still
+      // as a flat line.
+      let spatial = (2.0 * TAU * x).cos();
+      let pulse = pulse(phase);
+      let centre = CENTRE + (STATIC + AMPLITUDE * pulse) * spatial;
       let distance = (y - centre).abs();
 
       // Two low-frequency terms give a slightly ragged edge. The amplitude
@@ -101,8 +103,8 @@ mod tests {
 
   #[test]
   fn wave_moves_with_phase() {
-    let a = lit_names(0.0);
-    let b = lit_names(std::f32::consts::PI);
+    let a = lit_names(std::f32::consts::FRAC_PI_2);
+    let b = lit_names(-std::f32::consts::FRAC_PI_2);
     assert_ne!(a, b);
   }
 
@@ -131,23 +133,35 @@ mod tests {
   }
 
   #[test]
-  fn wave_bobs_vertically() {
-    fn average_y(phase: f32) -> f32 {
+  fn two_humps_alternate_with_centre() {
+    fn average_y(phase: f32, lo: f32, hi: f32) -> f32 {
       let mut sum = 0.0;
       let mut count = 0.0f32;
       for (index, (_, color)) in frame(phase).iter().enumerate() {
-        if *color != Rgb::OFF {
+        if *color == Rgb::OFF {
+          continue;
+        }
+        let x = ((CENTERS[index].0 - X_MIN) / (X_MAX - X_MIN)).clamp(0.0, 1.0);
+        if (lo..=hi).contains(&x) {
           sum += CENTERS[index].1;
           count += 1.0;
         }
       }
       sum / count.max(1.0)
     }
-    let low = average_y(-std::f32::consts::FRAC_PI_2);
-    let high = average_y(std::f32::consts::FRAC_PI_2);
+
+    let hump_up = average_y(std::f32::consts::FRAC_PI_2, 0.15, 0.35);
+    let centre_down = average_y(std::f32::consts::FRAC_PI_2, 0.45, 0.55);
     assert!(
-      (high - low).abs() > 4.0,
-      "wave should bob vertically: {low} vs {high}"
+      hump_up + 20.0 < centre_down,
+      "humps should sit above the centre valley: {hump_up} vs {centre_down}"
+    );
+
+    let hump_down = average_y(-std::f32::consts::FRAC_PI_2, 0.15, 0.35);
+    let centre_up = average_y(-std::f32::consts::FRAC_PI_2, 0.45, 0.55);
+    assert!(
+      hump_down > centre_up + 20.0,
+      "inverse phase should flip the shape: {hump_down} vs {centre_up}"
     );
   }
 

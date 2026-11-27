@@ -193,7 +193,7 @@ keyboard:
 redragon-k617 --dry-run effect sine-wave --color 00ff00
 ```
 
-## Thick red S-wave snake (experimental)
+## Pulsing red wave (experimental)
 
 ```sh
 # 10 second demo, then restore the previous effect
@@ -206,12 +206,13 @@ redragon-k617 snake --seconds 0
 redragon-k617 snake --speed 1.8
 ```
 
-The effect is a thick red band around a horizontal sine centreline. It uses
-the real key centres from `Cfg.ini`, so it covers the full keyboard including
-the spacebar, top row and bottom row. The whole S curve bobs up and down around
-the centre line, with a slow breathing shape, instead of travelling left to
-right. Every key outside the band stays off. The band edge has a small smooth
-thickness variation so it looks slightly distressed instead of laser-cut.
+The effect is a thick red two-hump standing wave. It uses the real key centres
+from `Cfg.ini`, so it covers the full keyboard including the spacebar, top row
+and bottom row. At one phase the two inner humps touch the top while the centre
+and the two ends touch the bottom; at the opposite phase it flips. The pulse is
+sharpened so the wave spends most of the cycle at the extremes and never sits
+as a straight line. Every key outside the band stays off. The band edge has a small smooth thickness
+variation so it looks slightly distressed instead of laser-cut.
 
 `--speed` is in radians per second and accepts high values (up to 120) for a
 very fast wave. `--fps 30` or `--fps 60` looks smoother than 15.
