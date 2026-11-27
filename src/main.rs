@@ -7,6 +7,8 @@
 //! reports the vendor software uses, so no kernel driver or firmware patch is
 //! involved.
 
+use std::time::{Duration, Instant};
+
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
 
@@ -15,6 +17,7 @@ use redragon_k617::hid::Keyboard;
 use redragon_k617::keymap;
 use redragon_k617::profile::{self, Profile};
 use redragon_k617::protocol::{self, EffectParams, Rgb};
+use redragon_k617::snake;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -99,6 +102,21 @@ enum Command {
     /// your keyboard accepts report 8.
     #[arg(long)]
     unsafe_per_key: bool,
+  },
+  /// Stream the thick red S-wave snake effect.
+  ///
+  /// This is a host-side animation and uses the non-vendor report-8 frame.
+  /// Keep the first runs short.
+  Snake {
+    /// Run time in seconds; 0 means until Ctrl+C.
+    #[arg(long, default_value_t = 10)]
+    seconds: u64,
+    /// Frames per second.
+    #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u64).range(1..=60))]
+    fps: u64,
+    /// Wave travel speed in radians per second.
+    #[arg(long, default_value_t = 2.6)]
+    speed: f32,
   },
   /// Turn the lighting off.
   Off {
@@ -201,6 +219,11 @@ fn run(cli: Cli) -> Result<()> {
       no_save,
       unsafe_per_key,
     } => paint(cli.dry_run, &assignments, &base, no_save, unsafe_per_key),
+    Command::Snake {
+      seconds,
+      fps,
+      speed,
+    } => snake_effect(cli.dry_run, seconds, fps, speed),
     Command::Off { no_save } => {
       let profile = Profile::new(Effect::Off, Rgb::OFF, 3, 3);
       apply(cli.dry_run, &profile, false)?;
@@ -362,6 +385,82 @@ fn paint(
   apply(dry_run, &profile, per_key)?;
   if !no_save {
     profile::save_current(&profile)?;
+  }
+  Ok(())
+}
+
+/// Stream the thick red S-wave snake. This is the non-vendor report-8 path:
+/// it works on the tested K617 with red but can be fragile on other firmware
+/// revisions, so keep the first runs short and stop if the device resets.
+fn snake_effect(dry_run: bool, seconds: u64, fps: u64, speed: f32) -> Result<()> {
+  if dry_run {
+    for phase in [
+      0.0,
+      std::f32::consts::FRAC_PI_2,
+      std::f32::consts::PI,
+      3.0 * std::f32::consts::FRAC_PI_2,
+    ] {
+      let lit: Vec<&str> = snake::frame(phase)
+        .into_iter()
+        .filter(|(_, color)| *color != Rgb::OFF)
+        .map(|(key, _)| key.name)
+        .collect();
+      println!("phase {phase:.2}: {}", lit.join(" "));
+    }
+    return Ok(());
+  }
+
+  let fps = fps.clamp(1, 60);
+  let speed = speed.clamp(0.2, 8.0);
+  let keyboard = Keyboard::open()?;
+  let previous = profile::load_current()?;
+
+  // Self-define is where report 8 lands. Red is the vendor default base
+  // colour and the colour used by the mockup.
+  keyboard.apply_effect(EffectParams {
+    effect: Effect::SelfDefine,
+    color: Rgb::new(255, 0, 0),
+    speed: 3,
+    brightness: 4,
+  })?;
+
+  eprintln!(
+    "snake: streaming report 8 at {fps} fps; {}",
+    if seconds == 0 {
+      "press Ctrl+C to stop".to_string()
+    } else {
+      format!("running for {seconds}s")
+    }
+  );
+
+  let frame_time = Duration::from_secs_f64(1.0 / fps as f64);
+  let start = Instant::now();
+  let limit = (seconds > 0).then(|| Duration::from_secs(seconds));
+  let mut phase = 0.0f32;
+
+  loop {
+    let frame = protocol::per_key_frame(&snake::frame(phase));
+    keyboard.send_per_key(&frame)?;
+    if let Some(limit) = limit {
+      if start.elapsed() >= limit {
+        break;
+      }
+    }
+    std::thread::sleep(frame_time);
+    phase = (phase + speed * frame_time.as_secs_f32()) % std::f32::consts::TAU;
+  }
+
+  drop(keyboard);
+  match previous {
+    Some(profile) => {
+      apply(false, &profile, false)?;
+      eprintln!("snake: restored {}", profile.effect);
+    }
+    None => {
+      let fallback = Profile::new(Effect::Rainbow, Rgb::new(0, 255, 0), 3, 3);
+      apply(false, &fallback, false)?;
+      eprintln!("snake: restored rainbow");
+    }
   }
   Ok(())
 }

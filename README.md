@@ -193,6 +193,29 @@ keyboard:
 redragon-k617 --dry-run effect sine-wave --color 00ff00
 ```
 
+## Thick red S-wave snake (experimental)
+
+```sh
+# 10 second demo, then restore the previous effect
+redragon-k617 snake
+
+# run until Ctrl+C
+redragon-k617 snake --seconds 0
+
+# slower or faster wave
+redragon-k617 snake --speed 1.8
+```
+
+The effect is a thick red band around a horizontal sine centreline. It spans
+the full keyboard, moves left to right by shifting phase, and leaves every key
+outside the band off. The band edge has a small smooth thickness variation so
+it looks slightly distressed instead of laser-cut.
+
+This command streams report-8 per-key frames, which is the non-vendor path.
+Report 8 can reset some K617 firmware revisions. It is deliberately a separate
+explicit command, not part of the safe GUI or default effect paths. Keep the
+first runs short and unplug/replug the keyboard if it disappears.
+
 ## How it works
 
 The keyboard exposes a vendor HID interface (interface 1, usage page `0xFF00`,
