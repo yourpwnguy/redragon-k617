@@ -19,11 +19,12 @@ use crate::protocol::Rgb;
 /// Vertical centre of the wave, 0 = top of the key area, 1 = bottom.
 const CENTRE: f32 = 0.50;
 /// How far the centreline swings above and below `CENTRE`.
-const AMPLITUDE: f32 = 0.34;
+const AMPLITUDE: f32 = 0.30;
 /// Number of full S curves across the used keyboard width.
 const PERIODS: f32 = 1.5;
-/// Base half-thickness as a fraction of the key-area height.
-const THICKNESS: f32 = 0.19;
+/// Base half-thickness as a fraction of the key-area height. The band is
+/// deliberately fat: about two and a half visible key rows, not a single row.
+const THICKNESS: f32 = 0.24;
 /// Bounds of the key area inside the 560x212 preview image.
 const X_MIN: f32 = 13.0;
 const X_MAX: f32 = 547.0;
@@ -53,8 +54,12 @@ pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
         return (*key, Rgb::OFF);
       }
 
-      let intensity = (1.0 - distance / thickness).powf(0.72);
-      // Keep the core bright red and fade the border through dark red. The
+      // Edge keys stay clearly red instead of fading to black. That is what
+      // makes the band read as thick on hardware: a pure linear falloff only
+      // leaves the centre row visibly bright.
+      let falloff = (1.0 - distance / thickness).powf(0.65);
+      let intensity = 0.42 + 0.58 * falloff;
+      // Keep the core bright red and fade the border through red. The
       // green/blue crumbs only appear at the very centre so it still looks red.
       let r = (42.0 + 213.0 * intensity).round() as u8;
       let g = (18.0 * intensity.powi(3)).round() as u8;
