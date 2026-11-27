@@ -209,9 +209,10 @@ redragon-k617 snake --speed 1.8
 The effect is a thick red two-hump standing wave. It uses the real key centres
 from `Cfg.ini`, so it covers the full keyboard including the spacebar, top row
 and bottom row. At one phase the two inner humps touch the top while the centre
-and the two ends touch the bottom; at the opposite phase it flips. The pulse is
-sharpened so the wave spends most of the cycle at the extremes and never sits
-as a straight line. Every key outside the band stays off. The band edge has a small smooth thickness
+and the two ends touch the bottom; at the opposite phase it flips. A quadrature
+single-arch term keeps the shape continuously rolling, so it never pauses on a
+flat line and never stops at the extremes. Every key outside the band stays
+off. The band edge has a small smooth thickness
 variation so it looks slightly distressed instead of laser-cut.
 
 `--speed` is in radians per second and accepts high values (up to 120) for a

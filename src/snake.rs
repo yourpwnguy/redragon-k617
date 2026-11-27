@@ -1,10 +1,11 @@
 //! Host-side pulsing red wave effect.
 //!
-//! This is a monochrome red standing wave with two humps. At one phase the
-//! two inner humps touch the top while the centre and the two ends touch the
-//! bottom. At the opposite phase it flips: the humps go down while the centre
-//! and ends go up. The band is thick, spans the full keyboard, and every key
-//! outside it stays black.
+//! This is a monochrome red rolling wave with two humps. It continuously
+//! morphs between the two-hump M (humps up, centre and ends down) and its
+//! inverse, passing through a single-arch transition. The quadrature term
+//! keeps the shape moving and curved: it never pauses at the extremes and
+//! never collapses to a straight line. The band is thick, spans the full
+//! keyboard, and every key outside it stays black.
 //!
 //! The geometry uses the real key centres, so wide keys such as Space are
 //! included. Only the keys inside the band are non-black.
@@ -17,12 +18,10 @@ use crate::protocol::Rgb;
 /// Vertical centre of the wave, 0 = top of the key area, 1 = bottom.
 const CENTRE: f32 = 0.50;
 /// How far the humps swing above and below `CENTRE`.
-const AMPLITUDE: f32 = 0.32;
-/// Permanent arch so the wave never becomes a straight line.
-const STATIC: f32 = 0.08;
-/// Sharpens the pulse. The wave spends most of the cycle at the two
-/// extremes and flips through the middle quickly instead of lingering flat.
-const PULSE_K: f32 = 5.0;
+const AMPLITUDE: f32 = 0.38;
+/// Strength of the single-arch quadrature component. This is what keeps the
+/// transition curved and moving instead of pausing on a flat line.
+const QUADRATURE: f32 = 0.45;
 /// Base half-thickness as a fraction of the key-area height. The band is
 /// deliberately fat: about two visible key rows, not a single row.
 const THICKNESS: f32 = 0.18;
@@ -31,12 +30,6 @@ const X_MIN: f32 = 13.0;
 const X_MAX: f32 = 547.0;
 const Y_MIN: f32 = 14.0;
 const Y_MAX: f32 = 188.0;
-
-/// Sharpened sine in -1..1. The `tanh` spends most of the cycle near the
-/// extremes, so the direction change is quick and the wave never looks flat.
-fn pulse(phase: f32) -> f32 {
-  (PULSE_K * phase.sin()).tanh() / PULSE_K.tanh()
-}
 
 /// One animation frame. Returns one colour per K617 key. Unlit keys are black.
 pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
@@ -50,12 +43,12 @@ pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
       let x = ((cx - X_MIN) / (X_MAX - X_MIN)).clamp(0.0, 1.0);
       let y = ((cy - Y_MIN) / (Y_MAX - Y_MIN)).clamp(0.0, 1.0);
       // cos(4*pi*x) is +1 at the centre and the two ends, -1 at the two
-      // inner humps. The sharpened sine pulses between "humps up" and
-      // "humps down" and crosses the middle quickly, so it never sits still
-      // as a flat line.
-      let spatial = (2.0 * TAU * x).cos();
-      let pulse = pulse(phase);
-      let centre = CENTRE + (STATIC + AMPLITUDE * pulse) * spatial;
+      // inner humps. The sin term pulses the M shape up and down. The cos
+      // term adds a single arch in quadrature, so when the M amplitude is
+      // zero the band is still curved and still moving.
+      let m_shape = (2.0 * TAU * x).cos();
+      let arch = (TAU * x).cos();
+      let centre = CENTRE + AMPLITUDE * (m_shape * phase.sin() + QUADRATURE * arch * phase.cos());
       let distance = (y - centre).abs();
 
       // Two low-frequency terms give a slightly ragged edge. The amplitude
@@ -162,6 +155,31 @@ mod tests {
     assert!(
       hump_down > centre_up + 20.0,
       "inverse phase should flip the shape: {hump_down} vs {centre_up}"
+    );
+  }
+
+  #[test]
+  fn transition_is_never_flat() {
+    fn average_y(phase: f32, lo: f32, hi: f32) -> f32 {
+      let mut sum = 0.0;
+      let mut count = 0.0f32;
+      for (index, (_, color)) in frame(phase).iter().enumerate() {
+        if *color == Rgb::OFF {
+          continue;
+        }
+        let x = ((CENTERS[index].0 - X_MIN) / (X_MAX - X_MIN)).clamp(0.0, 1.0);
+        if (lo..=hi).contains(&x) {
+          sum += CENTERS[index].1;
+          count += 1.0;
+        }
+      }
+      sum / count.max(1.0)
+    }
+    let centre = average_y(0.0, 0.45, 0.55);
+    let hump = average_y(0.0, 0.20, 0.30);
+    assert!(
+      (centre - hump).abs() > 10.0,
+      "transition must stay curved, got centre={centre} hump={hump}"
     );
   }
 
