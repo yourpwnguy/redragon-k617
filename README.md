@@ -206,10 +206,14 @@ redragon-k617 snake --seconds 0
 redragon-k617 snake --speed 1.8
 ```
 
-The effect is a thick red band around a horizontal sine centreline. It spans
-the full keyboard, moves left to right by shifting phase, and leaves every key
-outside the band off. The band edge has a small smooth thickness variation so
-it looks slightly distressed instead of laser-cut.
+The effect is a thick red band around a horizontal sine centreline. It uses
+the real key centres from `Cfg.ini`, so it covers the full keyboard including
+the spacebar, top row and bottom row. It moves left to right by shifting phase
+and leaves every key outside the band off. The band edge has a small smooth
+thickness variation so it looks slightly distressed instead of laser-cut.
+
+`--speed` is in radians per second and accepts high values (up to 120) for a
+very fast wave. `--fps 30` or `--fps 60` looks smoother than 15.
 
 This command streams report-8 per-key frames, which is the non-vendor path.
 Report 8 can reset some K617 firmware revisions. It is deliberately a separate

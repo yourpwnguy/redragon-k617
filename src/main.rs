@@ -411,7 +411,7 @@ fn snake_effect(dry_run: bool, seconds: u64, fps: u64, speed: f32) -> Result<()>
   }
 
   let fps = fps.clamp(1, 60);
-  let speed = speed.clamp(0.2, 8.0);
+  let speed = speed.clamp(0.2, 120.0);
   let keyboard = Keyboard::open()?;
   let previous = profile::load_current()?;
 
@@ -425,7 +425,7 @@ fn snake_effect(dry_run: bool, seconds: u64, fps: u64, speed: f32) -> Result<()>
   })?;
 
   eprintln!(
-    "snake: streaming report 8 at {fps} fps; {}",
+    "snake: streaming report 8 at {fps} fps, speed {speed:.1} rad/s; {}",
     if seconds == 0 {
       "press Ctrl+C to stop".to_string()
     } else {

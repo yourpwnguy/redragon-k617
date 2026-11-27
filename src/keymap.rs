@@ -95,6 +95,72 @@ pub const KEYS: [KeyDef; KEY_COUNT] = [
 
 pub const KEY_COUNT: usize = 61;
 
+/// Key centres in the 560x212 preview image, in the same order as `KEYS`.
+/// Used by host-side previews such as the snake animation.
+pub const CENTERS: [(f32, f32); KEY_COUNT] = [
+  (25.0, 28.0),   // Escape
+  (61.0, 28.0),   // 1
+  (97.0, 28.0),   // 2
+  (134.0, 28.0),  // 3
+  (170.0, 28.0),  // 4
+  (207.0, 28.0),  // 5
+  (244.0, 29.0),  // 6
+  (280.0, 28.0),  // 7
+  (316.0, 28.0),  // 8
+  (353.0, 28.0),  // 9
+  (390.0, 28.0),  // 0
+  (426.0, 28.0),  // Minus
+  (462.0, 28.0),  // Equal
+  (516.5, 28.0),  // Backspace
+  (33.5, 65.0),   // Tab
+  (79.0, 65.0),   // Q
+  (116.0, 65.0),  // W
+  (152.0, 65.0),  // E
+  (189.0, 64.0),  // R
+  (225.0, 64.0),  // T
+  (262.0, 64.0),  // Y
+  (298.0, 64.0),  // U
+  (334.0, 64.0),  // I
+  (371.0, 65.0),  // O
+  (407.0, 65.0),  // P
+  (444.0, 65.0),  // LBracket
+  (480.0, 65.0),  // RBracket
+  (526.0, 65.0),  // Backslash
+  (39.5, 100.0),  // CapsLock
+  (89.0, 101.0),  // A
+  (125.0, 101.0), // S
+  (161.0, 101.0), // D
+  (198.0, 101.0), // F
+  (235.0, 101.0), // G
+  (271.0, 101.0), // H
+  (308.0, 101.0), // J
+  (344.0, 101.0), // K
+  (380.0, 101.0), // L
+  (417.0, 101.0), // Semicolon
+  (453.0, 101.0), // Quote
+  (512.0, 101.0), // Enter
+  (48.5, 137.0),  // LShift
+  (106.0, 137.0), // Z
+  (144.0, 137.0), // X
+  (180.0, 137.0), // C
+  (216.0, 137.0), // V
+  (252.0, 137.0), // B
+  (289.0, 137.0), // N
+  (325.0, 137.0), // M
+  (361.0, 137.0), // Comma
+  (398.0, 137.0), // Period
+  (434.0, 137.0), // Slash
+  (502.5, 137.0), // RShift
+  (28.0, 174.0),  // LCtrl
+  (75.0, 174.0),  // LSuper
+  (121.0, 174.0), // LAlt
+  (257.0, 174.0), // Space
+  (393.0, 174.0), // RAlt
+  (439.5, 174.0), // Fn
+  (484.5, 174.0), // Menu
+  (530.5, 174.0), // RCtrl
+];
+
 /// Resolve a user-supplied key name. Besides the canonical names above this
 /// accepts the common short forms (`Esc`, `Ctrl`, `Win`, punctuation names).
 pub fn find(name: &str) -> Option<&'static KeyDef> {

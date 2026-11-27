@@ -13,36 +13,42 @@
 
 use std::f32::consts::TAU;
 
-use crate::keymap::{KeyDef, KEYS};
+use crate::keymap::{KeyDef, CENTERS, KEYS};
 use crate::protocol::Rgb;
 
-/// Vertical centre of the wave in matrix rows (0 is the top row).
-const CENTRE: f32 = 2.55;
+/// Vertical centre of the wave, 0 = top of the key area, 1 = bottom.
+const CENTRE: f32 = 0.50;
 /// How far the centreline swings above and below `CENTRE`.
-const AMPLITUDE: f32 = 1.35;
+const AMPLITUDE: f32 = 0.34;
 /// Number of full S curves across the used keyboard width.
 const PERIODS: f32 = 1.5;
-/// Base half-thickness in matrix rows.
-const THICKNESS: f32 = 1.08;
+/// Base half-thickness as a fraction of the key-area height.
+const THICKNESS: f32 = 0.19;
+/// Bounds of the key area inside the 560x212 preview image.
+const X_MIN: f32 = 13.0;
+const X_MAX: f32 = 547.0;
+const Y_MIN: f32 = 14.0;
+const Y_MAX: f32 = 188.0;
 
 /// One animation frame. Returns one colour per K617 key. Unlit keys are black.
 pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
   KEYS
     .iter()
-    .map(|key| {
-      let slot = key.sinodragon_slot as f32;
-      let col = (slot / 6.0).floor();
-      let row = slot % 6.0;
-      // The K617 uses columns 0..13; 14 and 15 are empty slots.
-      let x = (col / 13.0).clamp(0.0, 1.0);
+    .enumerate()
+    .map(|(index, key)| {
+      // Use the real key centres from Cfg.ini so wide keys such as Space are
+      // included and the wave spans the whole physical keyboard.
+      let (cx, cy) = CENTERS[index];
+      let x = ((cx - X_MIN) / (X_MAX - X_MIN)).clamp(0.0, 1.0);
+      let y = ((cy - Y_MIN) / (Y_MAX - Y_MIN)).clamp(0.0, 1.0);
       let centre = CENTRE + AMPLITUDE * (TAU * PERIODS * x - phase).sin();
-      let distance = (row - centre).abs();
+      let distance = (y - centre).abs();
 
       // Two low-frequency terms give a slightly ragged edge. The amplitude
       // is deliberately small: enough to read as distressed, not noisy.
       let thickness = THICKNESS
-        + 0.12 * (col * 1.31 + phase * 1.7).sin()
-        + 0.06 * (col * 0.57 - row * 0.82 + phase * 2.1).sin();
+        + 0.022 * (cx * 0.013 + phase * 1.7).sin()
+        + 0.012 * (cx * 0.006 - cy * 0.009 + phase * 2.1).sin();
       if distance >= thickness {
         return (*key, Rgb::OFF);
       }
@@ -82,6 +88,30 @@ mod tests {
     let a = lit_names(0.0);
     let b = lit_names(std::f32::consts::PI);
     assert_ne!(a, b);
+  }
+
+  #[test]
+  fn covers_the_full_keyboard_including_space() {
+    let mut saw_space = false;
+    let mut saw_top = false;
+    let mut saw_bottom = false;
+    for step in 0..120 {
+      let phase = step as f32 * TAU / 120.0;
+      for (key, color) in frame(phase) {
+        if color == Rgb::OFF {
+          continue;
+        }
+        match key.name {
+          "Space" => saw_space = true,
+          "Escape" => saw_top = true,
+          "LCtrl" | "RCtrl" => saw_bottom = true,
+          _ => {}
+        }
+      }
+    }
+    assert!(saw_space, "spacebar must be part of the wave");
+    assert!(saw_top, "top row must be part of the wave");
+    assert!(saw_bottom, "bottom row must be part of the wave");
   }
 
   #[test]
