@@ -207,8 +207,8 @@ redragon-k617 snake --speed 1.8
 ```
 
 The effect is a thick red two-hump standing wave. It uses the real key centres
-from `Cfg.ini`, so it covers the full keyboard including the spacebar, top row
-and bottom row. At one phase the two inner humps touch the top while the centre
+from `Cfg.ini` and normalises against the leftmost and rightmost key centres, so
+it stays centred and includes the spacebar, Escape, left Ctrl and right Ctrl. At one phase the two inner humps touch the top while the centre
 and the two ends touch the bottom; at the opposite phase it flips. A quadrature
 single-arch term keeps the shape continuously rolling, so it never pauses on a
 flat line and never stops at the extremes. Every key outside the band stays

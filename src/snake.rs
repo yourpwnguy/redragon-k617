@@ -24,10 +24,12 @@ const AMPLITUDE: f32 = 0.38;
 const QUADRATURE: f32 = 0.45;
 /// Base half-thickness as a fraction of the key-area height. The band is
 /// deliberately fat: about two visible key rows, not a single row.
-const THICKNESS: f32 = 0.18;
-/// Bounds of the key area inside the 560x212 preview image.
-const X_MIN: f32 = 13.0;
-const X_MAX: f32 = 547.0;
+const THICKNESS: f32 = 0.26;
+/// Bounds of the actual key centres inside the 560x212 preview image.
+/// Using the leftmost and rightmost key centres (Escape and RCtrl) keeps the
+/// pulse symmetric and makes the far-right bottom key part of the wave.
+const X_MIN: f32 = 25.0;
+const X_MAX: f32 = 530.5;
 const Y_MIN: f32 = 14.0;
 const Y_MAX: f32 = 188.0;
 
@@ -105,7 +107,8 @@ mod tests {
   fn covers_the_full_keyboard_including_space() {
     let mut saw_space = false;
     let mut saw_top = false;
-    let mut saw_bottom = false;
+    let mut saw_lctrl = false;
+    let mut saw_rctrl = false;
     for step in 0..120 {
       let phase = step as f32 * TAU / 120.0;
       for (key, color) in frame(phase) {
@@ -115,14 +118,16 @@ mod tests {
         match key.name {
           "Space" => saw_space = true,
           "Escape" => saw_top = true,
-          "LCtrl" | "RCtrl" => saw_bottom = true,
+          "LCtrl" => saw_lctrl = true,
+          "RCtrl" => saw_rctrl = true,
           _ => {}
         }
       }
     }
     assert!(saw_space, "spacebar must be part of the wave");
     assert!(saw_top, "top row must be part of the wave");
-    assert!(saw_bottom, "bottom row must be part of the wave");
+    assert!(saw_lctrl, "left Ctrl must be part of the wave");
+    assert!(saw_rctrl, "right Ctrl must be part of the wave");
   }
 
   #[test]
