@@ -3,8 +3,8 @@
 //! This is a monochrome red wave that spans the keyboard horizontally. The
 //! body is a thick band around a sine centreline, with a small amount of
 //! smooth thickness variation so the edges look distressed rather than
-//! laser-cut. The wave travels by shifting the phase, which is what makes it
-//! move like a snake.
+//! laser-cut. The whole S curve bobs up and down around the centre line and
+//! slowly breathes; it does not travel left to right.
 //!
 //! The geometry uses the Sinodragon matrix slots (16 columns x 6 rows) rather
 //! than pixel coordinates, so the same frame works for the CLI streamer and a
@@ -18,8 +18,15 @@ use crate::protocol::Rgb;
 
 /// Vertical centre of the wave, 0 = top of the key area, 1 = bottom.
 const CENTRE: f32 = 0.50;
-/// How far the centreline swings above and below `CENTRE`.
-const AMPLITUDE: f32 = 0.30;
+/// How far the S curve swings above and below `CENTRE`.
+const AMPLITUDE: f32 = 0.26;
+/// How far the whole curve bobs up and down around the centre line.
+const BOB: f32 = 0.18;
+/// Small shape breathing so the S curve does not look mechanically fixed.
+const BREATHE: f32 = 0.22;
+/// Fixed phase offset that puts an S crest at the spacebar and a trough at
+/// the number row, so the vertical bob reaches both the top and bottom rows.
+const PHASE0: f32 = -2.735;
 /// Number of full S curves across the used keyboard width.
 const PERIODS: f32 = 1.5;
 /// Base half-thickness as a fraction of the key-area height. The band is
@@ -42,7 +49,11 @@ pub fn frame(phase: f32) -> Vec<(KeyDef, Rgb)> {
       let (cx, cy) = CENTERS[index];
       let x = ((cx - X_MIN) / (X_MAX - X_MIN)).clamp(0.0, 1.0);
       let y = ((cy - Y_MIN) / (Y_MAX - Y_MIN)).clamp(0.0, 1.0);
-      let centre = CENTRE + AMPLITUDE * (TAU * PERIODS * x - phase).sin();
+      // Vertical bobbing plus a slow curve breathing. The phase no longer
+      // translates the wave horizontally.
+      let bob = BOB * (phase * 0.95).sin();
+      let breathe = BREATHE * (phase * 0.55).sin();
+      let centre = CENTRE + bob + AMPLITUDE * (TAU * PERIODS * x + PHASE0 + breathe).sin();
       let distance = (y - centre).abs();
 
       // Two low-frequency terms give a slightly ragged edge. The amplitude
@@ -117,6 +128,27 @@ mod tests {
     assert!(saw_space, "spacebar must be part of the wave");
     assert!(saw_top, "top row must be part of the wave");
     assert!(saw_bottom, "bottom row must be part of the wave");
+  }
+
+  #[test]
+  fn wave_bobs_vertically() {
+    fn average_y(phase: f32) -> f32 {
+      let mut sum = 0.0;
+      let mut count = 0.0f32;
+      for (index, (_, color)) in frame(phase).iter().enumerate() {
+        if *color != Rgb::OFF {
+          sum += CENTERS[index].1;
+          count += 1.0;
+        }
+      }
+      sum / count.max(1.0)
+    }
+    let low = average_y(-std::f32::consts::FRAC_PI_2);
+    let high = average_y(std::f32::consts::FRAC_PI_2);
+    assert!(
+      (high - low).abs() > 4.0,
+      "wave should bob vertically: {low} vs {high}"
+    );
   }
 
   #[test]

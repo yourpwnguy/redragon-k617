@@ -208,8 +208,9 @@ redragon-k617 snake --speed 1.8
 
 The effect is a thick red band around a horizontal sine centreline. It uses
 the real key centres from `Cfg.ini`, so it covers the full keyboard including
-the spacebar, top row and bottom row. It moves left to right by shifting phase
-and leaves every key outside the band off. The band edge has a small smooth
+the spacebar, top row and bottom row. The whole S curve bobs up and down around
+the centre line, with a slow breathing shape, instead of travelling left to
+right. Every key outside the band stays off. The band edge has a small smooth
 thickness variation so it looks slightly distressed instead of laser-cut.
 
 `--speed` is in radians per second and accepts high values (up to 120) for a

@@ -114,7 +114,7 @@ enum Command {
     /// Frames per second.
     #[arg(long, default_value_t = 30, value_parser = clap::value_parser!(u64).range(1..=60))]
     fps: u64,
-    /// Wave travel speed in radians per second.
+    /// Vertical wave speed in radians per second.
     #[arg(long, default_value_t = 2.6)]
     speed: f32,
   },
